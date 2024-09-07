@@ -5,7 +5,10 @@ Ensure you have **Python 3.7 or higher** installed. You'll also need the latest 
 Once everything is set up, run the following command in your terminal:
 
 ```bash
+
 python main.py
 
-**Note: ** This project is currently under development. I am actively working on fixing bugs and adding new features. 
+```
+
+**Note:** This project is currently under development. I am actively working on fixing bugs and adding new features. 
 
