@@ -1,8 +1,8 @@
 # different types of actions player can perform
 from __future__ import annotations
-from typing import TYPE_CHECKING, Tuple, Optional
+from typing import Optional, Tuple, TYPE_CHECKING
+
 import color
-from entity import Actor
 import exceptions
 
 if TYPE_CHECKING:
@@ -28,8 +28,33 @@ class Action:
         """
         raise NotImplementedError()
 
+class PickupAction(Action):
+    # pick up an item and add it to the inventory, if there is room for it
+    
+    def __init__(self, entity: Actor):
+        super().__init__(entity)
+    
+    def perform(self) -> None:
+        actor_location_x = self.entity.x
+        actor_location_y = self.entity.y
+        inventory = self.entity.inventory
+        
+        for item in self.engine.game_map.items:
+            if actor_location_x == item.x and actor_location_y == item.y:
+                if len(inventory.items) >= inventory.capacity:
+                    raise exceptions.Impossible('Your inventory is full.')
+
+                self.engine.game_map.entities.remove(item)
+                item.parent = self.entity.inventory
+                inventory.items.append(item)
+            
+                self.engine.message_log.add_message(f'You picked up the {item.name}!')
+                return
+        
+        raise exceptions.Impossible('There is nothing here to pick up.')
+
 class ItemAction(Action):
-    def __init__(self, entity: Actor, item: Item, target_xy: Optional[Tuple[int, int]]) -> None:
+    def __init__(self, entity: Actor, item: Item, target_xy: Optional[Tuple[int, int]] = None):
         super().__init__(entity)
         self.item = item
         if not target_xy:
@@ -43,10 +68,10 @@ class ItemAction(Action):
     def perform(self) -> None:
         self.item.consumable.activate(self)
 
-class EscapeAction(Action):
+class DropItem(ItemAction):
     def perform(self) -> None:
-        raise SystemExit()
-    
+        self.entity.inventory.drop(self.item)
+
 class WaitAction(Action):
     def perform(self) -> None:
         pass
@@ -83,12 +108,12 @@ class MeleeAction(ActionWithDirection):
         if not target: raise exceptions.Impossible('Nothing to attack.')
         
         damage = self.entity.fighter.power - target.fighter.defense
+        
         attack_desc = f'{self.entity.name.capitalize()} attacks {target.name}'
         if self.entity is self.engine.player: 
             attack_color = color.player_atk
         else:
             attack_color = color.enemy_atk
-
 
         if damage > 0:
             self.engine.message_log.add_message(
@@ -99,6 +124,7 @@ class MeleeAction(ActionWithDirection):
             self.engine.message_log.add_message(
                 f"{attack_desc} but does no damage.", attack_color
             )        
+            
 class MovementAction(ActionWithDirection):   
     def perform(self) -> None:
         dest_x, dest_y = self.dest_xy
@@ -116,4 +142,5 @@ class BumpAction(ActionWithDirection):
         if self.target_actor:
             return MeleeAction(self.entity, self.dx, self.dy).perform()
         
-        else: return MovementAction(self.entity, self.dx, self.dy).perform()    
+        else: 
+            return MovementAction(self.entity, self.dx, self.dy).perform()    

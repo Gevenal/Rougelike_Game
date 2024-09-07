@@ -3,7 +3,6 @@ import copy
 import traceback
 
 import tcod
-from tcod.console import Console
 
 import color
 from engine import Engine
@@ -23,6 +22,7 @@ def main() -> None:
     max_rooms = 30
     
     max_monsters_per_room = 2
+    max_items_per_room = 2
     
     tileset = tcod.tileset.load_tilesheet(
         "dejavu10x10_gs_tc.png", 32, 8, tcod.tileset.CHARMAP_TCOD
@@ -32,7 +32,7 @@ def main() -> None:
     player = copy.deepcopy(entity_factories.player)
     engine = Engine(player=player)
     
-    engine.game_map = generate_dungeon(max_rooms=max_rooms, room_min_size=room_min_size, room_max_size= room_max_size,map_width=map_width,map_height=map_height,max_monsters_per_room=max_monsters_per_room,engine=engine)
+    engine.game_map = generate_dungeon(max_rooms=max_rooms, room_min_size=room_min_size, room_max_size= room_max_size,map_width=map_width,map_height=map_height,max_monsters_per_room=max_monsters_per_room, max_items_per_room=max_items_per_room,engine=engine)
     
     engine.update_fov()
     

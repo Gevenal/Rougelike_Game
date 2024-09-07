@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 import color 
 
 if TYPE_CHECKING:
-    from tcod import console
+    from tcod import Console
     from engine import Engine
     from game_map import GameMap
     
@@ -13,7 +13,7 @@ def get_names_at_location(x: int, y: int, game_map: GameMap) -> str:
     if not game_map.in_bounds(x, y) or not game_map.visible[x, y]:
         return ''
 
-    names = ','.join(
+    names = ', '.join(
         entity.name for entity in game_map.entities if entity.x == x and entity.y == y
     )
     
@@ -24,13 +24,13 @@ def render_bar(
 ) -> None:
     bar_width = int(float(current_value)/maximum_value * total_width)
     
-    console.draw_rect(x=0, y=45, width=total_width, height=1, ch=1, bg=color.bar_empty)
+    console.draw_rect(x=0, y=45, width=20, height=1, ch=1, bg=color.bar_empty)
     
     if bar_width > 0:
         console.draw_rect(
             x=0, y=45, width=bar_width, height=1, ch=1, bg=color.bar_filled
         )
-        console.print( x=1, y=45, string=f"HP: {current_value}/{maximum_value}", fg=color.bar_text)
+    console.print( x=1, y=45, string=f"HP: {current_value}/{maximum_value}", fg=color.bar_text)
 
 def render_names_at_mouse_location(
     console: Console, x: int, y: int, engine: Engine

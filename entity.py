@@ -1,9 +1,11 @@
 # this file represents the existentialism in this game world
 # this generic class file represents everything in the world, which will prove the character's raison d'être 
 from __future__ import annotations
+
 import copy 
-from typing import Tuple, TypeVar, TYPE_CHECKING, Optional, Type
-from game_map import GameMap
+import math
+from typing import Tuple, TypeVar, TYPE_CHECKING, Optional, Type, Union
+
 
 from render_order import RenderOrder
 
@@ -12,12 +14,14 @@ if TYPE_CHECKING:
     from components.consumable import Consumable
     from components.ai import BaseAI
     from components.fighter import Fighter
+    from components.inventory import Inventory
+    from game_map import GameMap
 
 T=TypeVar('T', bound='Entity')
 
 class Entity: 
     # a generic object to represent players, enemies, items. etc
-    parent: GameMap
+    parent: Union[GameMap, Inventory]
     def __init__(
         self,
         parent: Optional[GameMap] = None,
@@ -39,7 +43,11 @@ class Entity:
         if parent:  # If parent isn't provided now then it will be set later
             self.parent = parent
             parent.entities.add(self)
-        
+            
+    @property
+    def gamemap(self) -> GameMap:
+        return self.parent.gamemap
+    
     # spawn the copy of this instance in a given location
     def spawn(self: T, gamemap: GameMap, x: int, y: int) -> T:
         clone = copy.deepcopy(self)
@@ -58,7 +66,10 @@ class Entity:
                     self.gamemap.entities.remove(self)
             self.parent = gamemap
             gamemap.entities.add(self)
-                
+       
+    def distance(self, x: int, y: int) -> float:
+        #  Return the distance between the current entity and the given (x, y) coordinate.
+        return math.sqrt((x-self.x)**2+(y-self.y)**2)
     
     def move(self, dx: int, dy: int) -> None:
         # Move the Entity by a given amount
@@ -75,7 +86,8 @@ class Actor(Entity):
         color: Tuple[int] = (255, 255, 255), 
         name: str = '<Unnamed>', 
         ai_cls: type[BaseAI], 
-        fighter: Fighter
+        fighter: Fighter,
+        inventory: Inventory
         ):
         super().__init__(
             x=x,
@@ -88,8 +100,12 @@ class Actor(Entity):
         )
         
         self.ai: Optional[BaseAI] = ai_cls(self)
+        
         self.fighter = fighter
         self.fighter.parent = self
+        
+        self.inventory = inventory
+        self.inventory.parent = self
         
     @property
     def is_alive(self) -> bool:
@@ -97,7 +113,14 @@ class Actor(Entity):
             return bool(self.ai)
 
 class Item(Entity):
-    def __init__(self, *, x: int = 0, y: int = 0, char: str = '?', color: Tuple[int] = (255, 255, 255), name: str = '<Unnamed>', consumable: Consumable):
+    def __init__(self,
+                 *, 
+                 x: int = 0, 
+                 y: int = 0, 
+                 char: str = '?', 
+                 color: Tuple[int] = (255, 255, 255), 
+                 name: str = '<Unnamed>', 
+                 consumable: Consumable):
         super().__init__(x=x, y=y, char=char, color=color, name=name, blocks_movement=False, render_order=RenderOrder.ITEM)
         
         self.consumable = consumable
